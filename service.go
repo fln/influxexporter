@@ -12,7 +12,7 @@ import (
 // Service holds internal state of Influx exporter service instance. Public
 // fields can be changed before service is started.
 type Service struct {
-	Database          string
+	Database          string // name of database to connect to
 	BufferSize        int
 	MinExportInterval time.Duration
 	// if not empty each data point sent to influx will be tagged with
@@ -26,7 +26,7 @@ type Service struct {
 }
 
 // New creates a new buffered influx data exporting service. User of this
-// service must start exporter thread using Run() before sending any data.
+// service must start exporter thread using Start() before sending any data.
 // Username and password should be provided in the url argument.
 func New(url string, database string, log logrus.FieldLogger) (*Service, error) {
 	c, err := client.NewHTTPClient(client.HTTPConfig{Addr: url})
@@ -44,9 +44,9 @@ func New(url string, database string, log logrus.FieldLogger) (*Service, error) 
 	}, err
 }
 
-// Run starts data exporting service. This function will run in a seperate
+// Start starts data exporting service. This function will run in a seperate
 // goroutine until Stop() is called.
-func (svc *Service) Run() {
+func (svc *Service) Start() {
 	// Block in case instance of this service is already running
 	svc.wg.Wait()
 
@@ -100,7 +100,7 @@ func (svc *Service) batchWrite(points []*client.Point) {
 
 // Stop signals data exporting service to stop waiting for new events and flush
 // all buffered events to influx DB. After service is stopped any call to Log()
-// will cause a panic. Service can be restarted again with Run()
+// will cause a panic. Service can be restarted again with Start().
 func (svc *Service) Stop() {
 	close(svc.sinkChan)
 	svc.wg.Wait()
