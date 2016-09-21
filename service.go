@@ -46,7 +46,12 @@ func New(url string, database string, log logrus.FieldLogger) (*Service, error) 
 
 // Start starts data exporting service. This function will run in a seperate
 // goroutine until Stop() is called.
+//
+// It is safe to call this function on nil value.
 func (svc *Service) Start() {
+	if svc == nil {
+		return
+	}
 	// Block in case instance of this service is already running
 	svc.wg.Wait()
 
@@ -101,7 +106,12 @@ func (svc *Service) batchWrite(points []*client.Point) {
 // Stop signals data exporting service to stop waiting for new events and flush
 // all buffered events to influx DB. After service is stopped any call to Log()
 // will cause a panic. Service can be restarted again with Start().
+//
+// It is safe to call this function on nil value.
 func (svc *Service) Stop() {
+	if svc == nil {
+		return
+	}
 	close(svc.sinkChan)
 	svc.wg.Wait()
 }
@@ -129,7 +139,13 @@ func (svc *Service) LogValue(measurement string, tags map[string]string, value i
 // Log sends a new datapoint to influx DB. This function can be used
 // concurrently. Calling this function after service is stopped will cause
 // panic.
+//
+// It is safe to call this function on nil value.
 func (svc *Service) Log(measurement string, tags map[string]string, fields map[string]interface{}) error {
+	if svc == nil {
+		return nil
+	}
+
 	if tags == nil {
 		tags = map[string]string{}
 	}
